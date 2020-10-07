@@ -69,6 +69,9 @@ class FriendSerializer(serializers.Serializer):
                 e.update(nickname)
             return friends_list
 
+        else:
+            return list()
+
 class ManageFriendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friend

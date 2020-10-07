@@ -47,12 +47,12 @@ def user_register(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        logout(request)
         jwt = parse_jwt(request)
         try:
             user = User.objects.get(jwt=jwt)
         except User.DoesNotExist:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        logout(request)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -75,11 +75,17 @@ def user_detail(request, pk):
 
     if request.method == 'PUT':
         if jwt == user.jwt:
-            serializer = UserSerializer(user, data=request.data)
-            serializer.save()
-            return Response(serializer.data)
+            nickname = request.data.get("nickname")
+            if not nickname:
+                nickname = user.nickname
+            data = {"nickname" : nickname}
+            serializer = UserSerializer(user, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -111,14 +117,14 @@ def friend_view(request):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        target = request.data.get('target')
-        if target:
+        pk = request.data.get('id')
+        if pk:
             try:
-                friend = Friend.objects.get(owner=user.id, target=target)
+                friend = Friend.objects.get(pk=pk)
             except Friend.DoesNotExist:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             friend.delete()
-            return Response(stats=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -149,13 +155,13 @@ def history_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        target = request.data.get('target')
-        if target:
+        pk = request.data.get('id')
+        if pk:
             try:
-                friend = History.objects.get(owner=user.id, target=target)
-            except Friend.DoesNotExist:
+                history = History.objects.get(pk=pk)
+            except History.DoesNotExist:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            friend.delete()
-            return Response(stats=status.HTTP_204_NO_CONTENT)
+            history.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
