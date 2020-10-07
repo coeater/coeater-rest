@@ -3,6 +3,8 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.db import models
 from rest_framework_jwt.settings import api_settings
 
+import uuid
+
 class UserManager(BaseUserManager):
     """
     Manage creating user and superuser
@@ -28,8 +30,10 @@ class UserManager(BaseUserManager):
         jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
         payload = jwt_payload_handler(user)
         token = jwt_encode_handler(payload)
+        code = uuid.uuid4().hex[:6].upper()
 
         user.jwt = token
+        user.code = code
         user.set_password(password)
         user.save(using=self._db)
 
@@ -39,10 +43,13 @@ class User(AbstractBaseUser,PermissionsMixin):
     objects = UserManager()
 
     #firebase id
-    uid = models.CharField(unique=True, null=False, blank=False, max_length=100)
+    uid = models.CharField(unique=True, null=False, blank=False, max_length=300)
 
     #token
-    jwt = models.CharField(unique=True, null=True, blank=True, max_length=100)
+    jwt = models.CharField(unique=True, null=True, blank=True, max_length=300)
+
+    #friend code
+    code = models.CharField(unique=True, null=True, blank=True, max_length=10)
 
     #displayed name
     nickname = models.CharField(unique=True, null=False, blank=False, max_length=20)
