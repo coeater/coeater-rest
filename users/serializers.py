@@ -17,14 +17,14 @@ class UserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ['id', 'nickname', 'created']
+        fields = ['id', 'code', 'nickname', 'created']
 
 class ManageUserSerializer(serializers.ModelSerializer):
     """
     """
     class Meta:
         model = User
-        fields = ['uid', 'jwt', 'nickname']
+        fields = ['uid', 'jwt', 'code', 'nickname']
 
     def create(self, validated_data):
         """
@@ -38,6 +38,7 @@ class ManageUserSerializer(serializers.ModelSerializer):
         """
         instance.nickname = validated_data.get('nickname', instance.nickname)
         instance.jwt = validated_data.get('jwt', instance.jwt)
+        instance.save()
         return instance
 
 class FriendSerializer(serializers.Serializer):

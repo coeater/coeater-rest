@@ -3,7 +3,7 @@ from users.models import User, Friend, History
 
 # Register your models here.
 class UserAdmin(admin.ModelAdmin):
-    fields = ['uid', 'jwt', 'nickname', 'is_active', 'is_staff', 'is_admin', 'is_superuser']
+    fields = ['uid', 'jwt', 'code', 'nickname', 'is_active', 'is_staff', 'is_admin', 'is_superuser']
 
 class FriendAdmin(admin.ModelAdmin):
     fields = ['owner', 'target']
