@@ -1,13 +1,42 @@
 # coeater-rest
 
 - [coeater-rest](#coeater-rest)
-  * [사용 방법](#사용-방법)
+  - [파일 구조](#파일-구조)
+  - [사용 방법](#사용-방법)
       - [설치하기](#설치-하기)
       - [서버 실행하기](#서버-실행하기)
-  * [DB 구조](#db-구조)
+  - [DB 구조](#db-구조)
       - [User](#user)
       - [Friend](#friend)
       - [History](#history)
+
+## 파일 구조
+
+다양한 파일이 있지만, 읽어볼만한 파일들만 적습니다.
+
+​	
+
+​	backend/
+
+​			...
+
+​			settings.py						-> Django에 추가한 api와 기본 설정들
+
+​			urls.py								-> Request가 가능한 url 모음
+
+​	users/
+
+​			...
+
+​			models.py						-> DB구조 정의			
+
+​			serializers.py					-> Serialization을 위한 serializer클래스 정의
+
+​			views.py							-> REST API 실제 구현 코드, **현재 미구현**
+
+​			urls.py								-> backend/urls.py에 정의된 url 중 users로 이어지는 url들 세부 분류, **현재 미구현**
+
+​	
 
 ## 사용 방법
 
