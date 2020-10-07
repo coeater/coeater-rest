@@ -14,27 +14,25 @@
 
 다양한 파일이 있지만, 읽어볼만한 파일들만 적습니다.
 
-​	
+&nbsp;backend/
 
-​	backend/
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...
 
-​			...
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;settings.py						-> Django에 추가한 api와 기본 설정들
 
-​			settings.py						-> Django에 추가한 api와 기본 설정들
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;urls.py								-> Request가 가능한 url 모음
 
-​			urls.py								-> Request가 가능한 url 모음
+&nbsp;users/
 
-​	users/
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...
 
-​			...
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;models.py						-> DB구조 정의			
 
-​			models.py						-> DB구조 정의			
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serializers.py					-> Serialization을 위한 serializer클래스 정의
 
-​			serializers.py					-> Serialization을 위한 serializer클래스 정의
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;views.py							-> REST API 실제 구현 코드, **현재 미구현**
 
-​			views.py							-> REST API 실제 구현 코드, **현재 미구현**
-
-​			urls.py								-> backend/urls.py에 정의된 url 중 users로 이어지는 url들 세부 분류, **현재 미구현**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;urls.py								-> backend/urls.py에 정의된 url 중 users로 이어지는 url들 세부 분류, **현재 미구현**
 
 ​	
 
