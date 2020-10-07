@@ -1,8 +1,6 @@
 from django.urls import path, include
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from users.models import Friend, History
+from users.models import Friend, History, User
 
 """
 [___Serializer]
@@ -26,41 +24,38 @@ class ManageUserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ['phone', 'nickname', 'password']
+        fields = ['uid', 'jwt', 'nickname']
 
     def create(self, validated_data):
         """
-        Create and return an existing User instance.
+        Create and return an created User instance.
         """
-        return User.objects.create_user(validated_data)
+        return User.objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         """
         Update and return an existing User instance.
         """
-        password = validated_data.get('password', instance.password)
         instance.nickname = validated_data.get('nickname', instance.nickname)
-        if validate_password(password):
-            instance.set_password(password)
-
+        instance.jwt = validated_data.get('jwt', instance.jwt)
         return instance
 
-class FriendSerializer(serializers.ModelSerializer):
+class FriendSerializer(serializers.Serializer):
     """
-    owner : number
-    count : number
-    friends : list of {id:number, created:Date, friend:User}
+    owner : Number, User ID
+    count : Number, number of friends
+    friends : List of {id:number, created:Date, friend:User}
     """
-    class Meta:
-        model = User
-        fields = ['owner', 'count', 'friends']
-
-    owner = serializers.SerializerMethodField()
+    owner_id = serializers.SerializerMethodField()
+    owner_nickname = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
     friends = serializers.SerializerMethodField()
 
-    def get_owner(self, obj):
+    def get_owner_id(self, obj):
         return obj.id
+
+    def get_owner_nickname(self, obj):
+        return obj.nickname
 
     def get_count(self, obj):
         return obj.friends.count()
@@ -68,19 +63,21 @@ class FriendSerializer(serializers.ModelSerializer):
     def get_friends(self, obj):
         friends = obj.friends.all()
         if friends:
-            return friends.values()
-        else:
-            return list()
+            friends_list = friends.values()
+            for e in friends_list:
+                nickname = {"target_nickname": User.objects.get(pk=e.get('target_id')).nickname}
+                e.update(nickname)
+            return friends_list
 
 class ManageFriendSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friend
-        fields = ['owner', 'friend', 'created']
+        fields = ['owner', 'target', 'created']
 
     def create(self, validated_data):
         """
         """
-        return Friend.objects.create(validated_data):
+        return Friend.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """
@@ -89,18 +86,22 @@ class ManageFriendSerializer(serializers.ModelSerializer):
         """
         return instance
 
-class HistorySerializer(serializers.ModelSerializer):
+class HistorySerializer(serializers.Serializer):
     """
-    owner : number
-    count : number
-    histories : list of {id:number, created:Date, target:User}
+    owner : Number, User ID
+    count : Number, number of histories
+    histories : List of {id:number, created:Date, target:User}
     """
-    owner = serializers.SerializerMethodField()
+    owner_id = serializers.SerializerMethodField()
+    owner_nickname = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
     histories = serializers.SerializerMethodField()
 
-    def get_owner(self, obj):
+    def get_owner_id(self, obj):
         return obj.id
+
+    def get_owner_nickname(self, obj):
+        return obj.nickname
 
     def get_count(self, obj):
         return obj.histories.count()
@@ -108,13 +109,14 @@ class HistorySerializer(serializers.ModelSerializer):
     def get_histories(self, obj):
         histories = obj.histories.all()
         if histories:
-            return histories.values('id', 'created', 'targert')
+            histories_list = histories.values()
+            for e in histories_list:
+                nickname = {"target_nickname": User.objects.get(pk=e.get('target_id')).nickname}
+                e.update(nickname)
+            return histories_list
+
         else:
             return list()
-
-    class Meta:
-        model = User
-        fields = ['owner', 'count', 'histories']
 
 class ManageHistorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -124,7 +126,7 @@ class ManageHistorySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         """
-        return History.objects.create(validated_data):
+        return History.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """
