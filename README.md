@@ -1,6 +1,13 @@
 # coeater-rest
 
-[TOC]
+- [coeater-rest](#coeater-rest)
+  * [사용 방법](#사용-방법)
+      - [설치하기](#설치-하기)
+      - [서버 실행하기](#서버-실행하기)
+  * [DB 구조](#db-구조)
+      - [User](#user)
+      - [Friend](#friend)
+      - [History](#history)
 
 ## 사용 방법
 
