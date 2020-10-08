@@ -43,9 +43,6 @@ class ManageUserSerializer(serializers.ModelSerializer):
 
 class FriendSerializer(serializers.Serializer):
     """
-    owner : Number, User ID
-    count : Number, number of friends
-    friends : List of {id:number, created:Date, friend:User}
     """
     owner_id = serializers.SerializerMethodField()
     owner_nickname = serializers.SerializerMethodField()

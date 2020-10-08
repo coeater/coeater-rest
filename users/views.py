@@ -74,7 +74,7 @@ def user_history(request, pk):
     jwt = parse_jwt(request)
 
     if request.method == 'GET':
-        serializer = HistorySerializer(user.histories.all(), many=True)
+        serializer = HistorySerializer(user)
         return Response(serializer.data)
 
     else:
@@ -93,7 +93,7 @@ def user_friend(request, pk):
     jwt = parse_jwt(request)
 
     if request.method == 'GET':
-        serializer = FriendSerializer(user.friends.all(), many=True)
+        serializer = FriendSerializer(user)
         return Response(serializer.data)
 
     else:
