@@ -50,6 +50,9 @@ def invitation_view(request):
         else:
             code = uuid.uuid4().hex[:6].upper()
             target = request.data.get('target_id')
+            if target and target == user.id:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+
             data = {"owner": user.id, "target": target, "code": code}
 
             serializer = InvitationSerializer(data=data)
