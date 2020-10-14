@@ -33,27 +33,27 @@ def invitation_view(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        if request.data.get('code'):
-            code = request.data.get('code')
+        if request.data.get('room_code'):
+            code = request.data.get('room_code')
             try:
-                invitation = Invitation.objects.get(code=code)
+                invitation = Invitation.objects.get(room_code=code)
             except Invitation.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
-            if invitation.target != None or invitation.owner == user:
+            if invitation.invitee != None or invitation.inviter == user:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
-            invitation.target = user.id
+            invitation.invitee = user
             invitation.save()
             serializer = InvitationSerializer(invitation)
             return Response(serializer.data)
 
         else:
-            code = uuid.uuid4().hex[:6].upper()
-            target = request.data.get('target_id')
-            if target and target == user.id:
+            code = uuid.uuid4().hex[:5].upper()
+            invitee = request.data.get('id')
+            if invitee and invitee == user.id:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
-            data = {"owner": user.id, "target": target, "code": code}
+            data = {"inviter": user.id, "invitee": invitee, "room_code": code}
 
             serializer = InvitationSerializer(data=data)
             if serializer.is_valid():
@@ -96,16 +96,16 @@ def invitation_detail(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        if invitation.target:
-            if jwt == invitation.owner.jwt:
+        if invitation.invitee:
+            if jwt == invitation.inviter.jwt:
                 if invitation.accepted == None:
                     return Response(status=status.HTTP_400_BAD_REQUEST)
                 elif invitation.accepted:
-                    code = invitation.code
-                    target = invitation.target
+                    code = invitation.room_code
+                    invitee = invitation.invitee
                     accepted = invitation.accepted
                     checked = True
-                    data = {"code": code, "target": target.id, "accepted": accepted, "checked": checked}
+                    data = {"room_code": code, "invitee": invitee.id, "accepted": accepted, "checked": checked}
                     serializer = InvitationSerializer(invitation, data=data)
                     if serializer.is_valid():
                         serializer.save()
@@ -119,12 +119,12 @@ def invitation_detail(request, pk):
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-            elif jwt == invitation.target.jwt:
-                code = invitation.code
-                target = invitation.target
+            elif jwt == invitation.invitee.jwt:
+                code = invitation.room_code
+                invitee = invitation.invitee
                 accepted = True
                 checked = invitation.checked
-                data = {"code": code, "target": target.id, "accepted": accepted, "checked": checked}
+                data = {"room_code": code, "invitee": invitee.id, "accepted": accepted, "checked": checked}
                 serializer = InvitationSerializer(invitation, data=data)
                 if serializer.is_valid():
                     serializer.save()
@@ -158,16 +158,16 @@ def invitation_detail(request, pk):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        if jwt == invitation.owner.jwt:  
+        if jwt == invitation.inviter.jwt:  
             invitation.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if invitation.target:
-            if jwt == invitation.target.jwt:
-                code = invitation.code
-                target = invitation.target
+        if invitation.invitee:
+            if jwt == invitation.invitee.jwt:
+                code = invitation.room_code
+                invitee = invitation.invitee
                 checked = invitation.checked
-                data = {"code": code, "target": target.id, "accepted": False, "checked": checked}
+                data = {"room_code": code, "invitee": invitee.id, "accepted": False, "checked": checked}
 
                 serializer = InvitationSerializer(invitation, data=data)
                 if serializer.is_valid():

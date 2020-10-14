@@ -11,8 +11,8 @@ class Invitation(models.Model):
     """
     
     created = models.DateTimeField(auto_now_add=True, editable=False)
-    code = models.CharField(primary_key=False, unique=True, blank=False, null=False, max_length=10)
-    owner = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE, related_name="invitations")
-    target = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE, related_name="invited")
+    room_code = models.CharField(primary_key=False, unique=True, blank=False, null=False, max_length=10)
+    inviter = models.ForeignKey(User, null=True, blank=False, on_delete=models.CASCADE, related_name="invitations")
+    invitee = models.ForeignKey(User, null=True, blank=True, default=None, on_delete=models.CASCADE, related_name="invited")
     accepted = models.BooleanField(null=True, default=None)
     checked = models.BooleanField(null=False, default=False)
