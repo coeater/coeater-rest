@@ -21,13 +21,24 @@ def parse_jwt(request):
             jwt = parsed[1]
     return jwt
 
-@api_view(['POST', 'DELETE'])
+@api_view(['GET','POST', 'DELETE'])
 @csrf_exempt
 def user_register(request):
     """
     Create user
     require JSON {uid:string, jwt:string, nickname:string} as data
     """
+    if request.method == 'GET':
+        uid = request.query_params.get("uid")
+        try:
+            user = User.objects.get(uid=uid)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ManageUserSerializer(user)
+        return Response(serializer.data)
+
+
     if request.method == 'POST':
         """
         register user
@@ -148,13 +159,18 @@ def friend_view(request):
 
     elif request.method == 'POST':
         owner = user.id
-        target = request.data.get('target_id')
+        target = request.data.get('id')
         code = request.data.get('code')
         if code:
             try:
                 target = User.objects.get(code=code)
             except User.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
+
+        friends = user.friends.all().filter(target=target)
+        if len(friends)>0:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         data = {'owner': owner, 'target': target}
         serializer = ManageFriendSerializer(data=data)
         if serializer.is_valid():
@@ -164,7 +180,7 @@ def friend_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        pk = request.data.get('target_id')
+        pk = request.data.get('id')
         if pk:
             try:
                 friend = user.friends.get(pk=pk)
@@ -192,7 +208,7 @@ def history_view(request):
 
     elif request.method == 'POST':
         owner = user.id
-        target = request.data.get('target_id')
+        target = request.data.get('id')
         data = {'owner': owner, 'target': target}
         serializer = ManageHistorySerializer(data=data)
         if serializer.is_valid():
@@ -202,7 +218,7 @@ def history_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
-        pk = request.data.get('target_id')
+        pk = request.data.get('id')
         if pk:
             try:
                 history = user.histories.get(pk=pk)

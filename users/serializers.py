@@ -44,29 +44,38 @@ class ManageUserSerializer(serializers.ModelSerializer):
 class FriendSerializer(serializers.Serializer):
     """
     """
-    owner_id = serializers.SerializerMethodField()
-    owner_nickname = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
     friends = serializers.SerializerMethodField()
 
-    def get_owner_id(self, obj):
-        return obj.id
-
-    def get_owner_nickname(self, obj):
-        return obj.nickname
+    def get_owner(self, obj):
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        return entity
 
     def get_count(self, obj):
         return obj.friends.count()
 
     def get_friends(self, obj):
         friends = obj.friends.all()
+        result = list()
         if friends:
             friends_list = friends.values()
             for e in friends_list:
-                nickname = {"target_nickname": User.objects.get(pk=e.get('target_id')).nickname}
-                e.update(nickname)
-            return friends_list
+                entity = dict()
+                target_id = e.get('target_id')
+                user = User.objects.get(pk=target_id)
 
+                nickname = {"nickname": user.nickname}
+                id = {"id": target_id}
+                code = {"code": user.code}
+
+                entity.update(id)
+                entity.update(nickname)
+                entity.update(code)
+
+                result.append(entity)
+            return result
+        
         else:
             return list()
 
@@ -93,28 +102,37 @@ class HistorySerializer(serializers.Serializer):
     count : Number, number of histories
     histories : List of {id:number, created:Date, target:User}
     """
-    owner_id = serializers.SerializerMethodField()
-    owner_nickname = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
     histories = serializers.SerializerMethodField()
 
-    def get_owner_id(self, obj):
-        return obj.id
-
-    def get_owner_nickname(self, obj):
-        return obj.nickname
+    def get_owner(self, obj):
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        return entity
 
     def get_count(self, obj):
         return obj.histories.count()
 
     def get_histories(self, obj):
         histories = obj.histories.all()
+        result = list()
         if histories:
             histories_list = histories.values()
             for e in histories_list:
-                nickname = {"target_nickname": User.objects.get(pk=e.get('target_id')).nickname}
-                e.update(nickname)
-            return histories_list
+                entity = dict()
+                target_id = e.get('target_id')
+                target = User.objects.get(pk=target_id)
+
+                nickname = {"nickname": target.nickname}
+                id = {"id": target_id}
+                code = {"code": target.code}
+
+                entity.update(id)
+                entity.update(nickname)
+                entity.update(code)
+
+                result.append(list(entity))
+            return result
 
         else:
             return list()
