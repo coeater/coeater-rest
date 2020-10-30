@@ -82,9 +82,6 @@ class FriendedSerializer(serializers.Serializer):
         else:
             return list()
 
-
-
-
 class FriendSerializer(serializers.Serializer):
     """
     """
