@@ -67,9 +67,9 @@ class User(AbstractBaseUser,PermissionsMixin):
 class Friend(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="friends")
-    target = models.ForeignKey(User, on_delete=models.CASCADE)
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name="friended")
 
 class History(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="histories")
-    target = models.ForeignKey(User, on_delete=models.CASCADE)
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name="historied")

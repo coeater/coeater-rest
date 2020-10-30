@@ -7,5 +7,6 @@ urlpatterns = [
     path('<int:pk>/friend/', views.user_friend),
     path('<int:pk>/history/', views.user_history),
     path('friend/', views.friend_view),
+    path('friend/wait/', views.friend_wait_view),
     path('history/', views.history_view),
 ]

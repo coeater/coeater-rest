@@ -41,6 +41,50 @@ class ManageUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class FriendedSerializer(serializers.Serializer):
+    owner = serializers.SerializerMethodField()
+    count = serializers.SerializerMethodField()
+    friends = serializers.SerializerMethodField()
+    def get_owner(self, obj):
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        return entity
+
+    def get_count(self, obj):
+        return obj.friends.count()
+
+    def get_friends(self, obj):
+        friended = obj.friended.all()
+        result = list()
+        if friended:
+            friends = obj.friends.all()
+            if friends:
+                parsed_list = list()
+                for e in friends:
+                    parsed_list.append(e.target)
+                friended = friended.exclude(owner__in=parsed_list)
+            friended_list = friended.values()
+            for e in friended_list:
+                entity = dict()
+                target_id = e.get('owner_id')
+                user = User.objects.get(pk=target_id)
+
+                nickname = {"nickname": user.nickname}
+                id = {"id": target_id}
+                code = {"code": user.code}
+
+                entity.update(id)
+                entity.update(nickname)
+                entity.update(code)
+
+                result.append(entity)
+            return result
+        
+        else:
+            return list()
+
+
+
+
 class FriendSerializer(serializers.Serializer):
     """
     """
