@@ -1,5 +1,5 @@
 from users.models import User, Friend, History
-from users.serializers import UserSerializer, FriendSerializer, HistorySerializer, FriendedSerializer
+from users.serializers import UserSerializer, FriendSerializer, HistorySerializer, FriendWaitSerializer
 from users.serializers import ManageUserSerializer, ManageFriendSerializer, ManageHistorySerializer
 
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -166,12 +166,19 @@ def friend_view(request):
                 target = User.objects.get(code=code)
             except User.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
+        elif target:
+            try:
+                target = User.objects.get(id=target)
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         friends = user.friends.all().filter(target=target)
         if len(friends)>0:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        data = {'owner': owner, 'target': target}
+        data = {'owner': owner, 'target': target.id}
         serializer = ManageFriendSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -180,14 +187,23 @@ def friend_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'PUT':
+        trigger = 0
         pk = request.data.get('id')
         if pk:
             try:
-                friend = user.friends.get(pk=pk)
+                friend = user.friends.get(target=pk)
+                friend.delete()
             except Friend.DoesNotExist:
+                trigger = trigger+1
+            try:
+                friend = user.friended.get(owner=pk, target=user.id)
+                friend.delete()
+            except Friend.DoesNotExist:
+                trigger = trigger+10
+            if trigger == 11:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            friend.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -203,7 +219,7 @@ def friend_wait_view(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = FriendedSerializer(user)
+        serializer = FriendWaitSerializer(user)
         return Response(serializer.data)
 
 @api_view(['GET', 'POST', 'PUT'])

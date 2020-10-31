@@ -41,16 +41,47 @@ class ManageUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-class FriendedSerializer(serializers.Serializer):
+class FriendWaitSerializer(serializers.Serializer):
     owner = serializers.SerializerMethodField()
     count = serializers.SerializerMethodField()
     friends = serializers.SerializerMethodField()
+    requests = serializers.SerializerMethodField()
     def get_owner(self, obj):
         entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
         return entity
 
     def get_count(self, obj):
         return obj.friends.count()
+
+    def get_requests(self, obj):
+        friends = obj.friends.all()
+        result = list()
+        if friends:
+            friended = obj.friended.all()
+            if friended:
+                parsed_list = list()
+                for e in friended:
+                    parsed_list.append(e.owner)
+                friends = friends.exclude(target__in=parsed_list)
+            friends_list = friends.values()
+            for e in friends_list:
+                entity = dict()
+                target_id = e.get('owner_id')
+                user = User.objects.get(pk=target_id)
+
+                nickname = {"nickname": user.nickname}
+                id = {"id": target_id}
+                code = {"code": user.code}
+
+                entity.update(id)
+                entity.update(nickname)
+                entity.update(code)
+
+                result.append(entity)
+            return result
+        
+        else:
+            return list()
 
     def get_friends(self, obj):
         friended = obj.friended.all()
@@ -100,6 +131,14 @@ class FriendSerializer(serializers.Serializer):
         friends = obj.friends.all()
         result = list()
         if friends:
+            friended = obj.friended.all()
+            if friended:
+                parsed_list = list()
+                for e in friended:
+                    parsed_list.append(e.owner)
+                friends = friends.filter(target__in=parsed_list)
+            else:
+                return list()
             friends_list = friends.values()
             for e in friends_list:
                 entity = dict()
