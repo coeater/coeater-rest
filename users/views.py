@@ -173,6 +173,8 @@ def friend_view(request):
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        if target.id == owner:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         friends = user.friends.all().filter(target=target)
         if len(friends)>0:
