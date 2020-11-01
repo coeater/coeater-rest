@@ -1,3 +1,261 @@
-from django.shortcuts import render
+from users.models import User, Friend, History
+from users.serializers import UserSerializer, FriendSerializer, HistorySerializer, FriendWaitSerializer
+from users.serializers import ManageUserSerializer, ManageFriendSerializer, ManageHistorySerializer
 
-# Create your views here.
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate, login, logout
+from rest_framework_jwt.settings import api_settings
+
+import uuid
+
+def parse_jwt(request):
+    http_auth = request.META.get('HTTP_AUTHORIZATION')
+    jwt = ""
+    if http_auth:
+        parsed = http_auth.split()
+        if len(parsed) == 2:
+            jwt = parsed[1]
+    return jwt
+
+@api_view(['GET','POST', 'DELETE'])
+@csrf_exempt
+def user_register(request):
+    """
+    Create user
+    require JSON {uid:string, jwt:string, nickname:string} as data
+    """
+    if request.method == 'GET':
+        uid = request.query_params.get("uid")
+        try:
+            user = User.objects.get(uid=uid)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ManageUserSerializer(user)
+        return Response(serializer.data)
+
+
+    if request.method == 'POST':
+        """
+        register user
+        """
+        serializer = ManageUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
+            code = uuid.uuid4().hex[:6].upper()
+            user.jwt = token
+            user.code = code
+            user.save()
+            serializer = ManageUserSerializer(user)
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        jwt = parse_jwt(request)
+        try:
+            user = User.objects.get(jwt=jwt)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        logout(request)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@csrf_exempt
+def user_history(request, pk):
+    #find user
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    jwt = parse_jwt(request)
+
+    if request.method == 'GET':
+        serializer = HistorySerializer(user)
+        return Response(serializer.data)
+
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+@csrf_exempt
+def user_friend(request, pk):
+    #find user
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    jwt = parse_jwt(request)
+
+    if request.method == 'GET':
+        serializer = FriendSerializer(user)
+        return Response(serializer.data)
+
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT'])
+@csrf_exempt
+def user_detail(request, pk):
+    #find user
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    jwt = parse_jwt(request)
+
+    if request.method == 'GET':
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    if request.method == 'PUT':
+        if jwt == user.jwt:
+            nickname = request.data.get("nickname")
+            if not nickname:
+                nickname = user.nickname
+            data = {"nickname" : nickname}
+            serializer = UserSerializer(user, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST', 'PUT'])
+@csrf_exempt
+def friend_view(request):
+    jwt = parse_jwt(request)
+
+    #find user
+    try:
+        user = User.objects.get(jwt=jwt)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = FriendSerializer(user)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        owner = user.id
+        target = request.data.get('id')
+        code = request.data.get('code')
+        if code:
+            try:
+                target = User.objects.get(code=code)
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        elif target:
+            try:
+                target = User.objects.get(id=target)
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        friends = user.friends.all().filter(target=target)
+        if len(friends)>0:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        data = {'owner': owner, 'target': target.id}
+        serializer = ManageFriendSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+        trigger = 0
+        pk = request.data.get('id')
+        if pk:
+            try:
+                friend = user.friends.get(target=pk)
+                friend.delete()
+            except Friend.DoesNotExist:
+                trigger = trigger+1
+            try:
+                friend = user.friended.get(owner=pk, target=user.id)
+                friend.delete()
+            except Friend.DoesNotExist:
+                trigger = trigger+10
+            if trigger == 11:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@csrf_exempt
+def friend_wait_view(request):
+    jwt = parse_jwt(request)
+
+    #find user
+    try:
+        user = User.objects.get(jwt=jwt)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = FriendWaitSerializer(user)
+        return Response(serializer.data)
+
+@api_view(['GET', 'POST', 'PUT'])
+@csrf_exempt
+def history_view(request):
+    jwt = parse_jwt(request)
+
+    #find user
+    try:
+        user = User.objects.get(jwt=jwt)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = HistorySerializer(user)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        owner = user.id
+        target = request.data.get('id')
+        data = {'owner': owner, 'target': target}
+        serializer = ManageHistorySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PUT':
+        pk = request.data.get('id')
+        if pk:
+            try:
+                history = user.histories.get(pk=pk)
+            except History.DoesNotExist:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            history.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
