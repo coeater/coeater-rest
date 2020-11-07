@@ -11,10 +11,10 @@ class UserManager(BaseUserManager):
     """
     use_in_migrations = True
 
-    def create_user(self, uid, nickname, password=None):
+    def create_user(self, uid, nickname, profile=None, password=None):
         if not uid :
             raise ValueError('must have user uid')
-        user = self.model(uid=uid, nickname=nickname)
+        user = self.model(uid=uid, nickname=nickname, profile=profile)
         user.set_unusable_password()
         user.save(using=self._db)
         return user
@@ -54,6 +54,8 @@ class User(AbstractBaseUser,PermissionsMixin):
     #displayed name
     nickname = models.CharField(unique=True, null=False, blank=False, max_length=20)
     created = models.DateTimeField(auto_now_add=True)
+
+    profile = models.ImageField(blank=True, upload_to="profiles")
 
     #Data used internally
     is_active = models.BooleanField(default=True)

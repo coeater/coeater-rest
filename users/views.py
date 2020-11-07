@@ -3,12 +3,17 @@ from users.serializers import UserSerializer, FriendSerializer, HistorySerialize
 from users.serializers import ManageUserSerializer, ManageFriendSerializer, ManageHistorySerializer
 
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate, login, logout
 from rest_framework_jwt.settings import api_settings
+
+from PIL import Image
+from django.core.files.base import ContentFile
+from io import BytesIO, StringIO
 
 import uuid
 
@@ -21,20 +26,38 @@ def parse_jwt(request):
             jwt = parsed[1]
     return jwt
 
+def parse_downscale_image(request, field, size):
+    try:
+        im = Image.open(BytesIO(request.FILES[field].read()))
+    except IOError:
+        return None
+
+    (w, h) = im.size
+    if w > h:
+        ratio = size*1./w
+    else:
+        ratio = size*1./h
+    (width, height) = (int(w*ratio), int(h*ratio))
+    content = BytesIO()
+    im.resize((width, height), Image.ANTIALIAS).save(fp=content, format='JPEG', dpi=[72, 72])
+    return ContentFile(content.getvalue())
+
 @api_view(['GET','POST', 'DELETE'])
 @csrf_exempt
+@parser_classes([MultiPartParser, FormParser])
 def user_register(request):
     """
     Create user
     require JSON {uid:string, jwt:string, nickname:string} as data
     """
+
     if request.method == 'GET':
         uid = request.query_params.get("uid")
         try:
             user = User.objects.get(uid=uid)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = ManageUserSerializer(user)
         return Response(serializer.data)
 
@@ -55,7 +78,13 @@ def user_register(request):
             code = uuid.uuid4().hex[:6].upper()
             user.jwt = token
             user.code = code
+            if 'profile' in request.FILES:
+                filename = '%s.jpg' % (uuid.uuid4())
+                im = parse_downscale_image(request, 'profile', 200)
+                if im is not None:
+                    user.profile.save(name=filename, content=im)
             user.save()
+
             serializer = ManageUserSerializer(user)
             return Response(serializer.data)
         else:
@@ -106,12 +135,12 @@ def user_friend(request, pk):
     if request.method == 'GET':
         serializer = FriendSerializer(user)
         return Response(serializer.data)
-
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT'])
+@parser_classes([MultiPartParser, FormParser])
 @csrf_exempt
 def user_detail(request, pk):
     #find user
@@ -130,11 +159,17 @@ def user_detail(request, pk):
             nickname = request.data.get("nickname")
             if not nickname:
                 nickname = user.nickname
-            data = {"nickname" : nickname}
-            serializer = UserSerializer(user, data=data)
+            data = {"uid": user.uid, "nickname" : nickname, "profile" : user.profile}
+            serializer = ManageUserSerializer(user, data=data)
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
+                if 'profile' in request.FILES:
+                    filename = "%s.jpg" % (uuid.uuid4())
+                    im = parse_downscale_image(request, 'profile', 200)
+                    if im is not None:
+                        user.profile.save(name=filename, content=im)
+                user.nickname = nickname
+                user.save()
+                return Response(UserSerializer(user).data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
