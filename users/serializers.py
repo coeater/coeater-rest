@@ -46,8 +46,9 @@ class FriendWaitSerializer(serializers.Serializer):
     count = serializers.SerializerMethodField()
     friends = serializers.SerializerMethodField()
     requests = serializers.SerializerMethodField()
+
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
         return entity
 
     def get_count(self, obj):
@@ -72,10 +73,12 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                profile = {"profile": user.profile}
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -102,10 +105,12 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                profile = {"profile": user.profile}
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -148,10 +153,12 @@ class FriendSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                profile = {"profile": user.profile}
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -206,10 +213,12 @@ class HistorySerializer(serializers.Serializer):
                 nickname = {"nickname": target.nickname}
                 id = {"id": target_id}
                 code = {"code": target.code}
+                created = {"created": e.get("created")
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(created)
 
                 result.append(list(entity))
             return result
