@@ -213,7 +213,7 @@ class HistorySerializer(serializers.Serializer):
                 nickname = {"nickname": target.nickname}
                 id = {"id": target_id}
                 code = {"code": target.code}
-                created = {"created": e.get("created")
+                created = {"created": e.get("created")}
 
                 entity.update(id)
                 entity.update(nickname)
