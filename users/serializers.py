@@ -126,7 +126,7 @@ class FriendSerializer(serializers.Serializer):
     friends = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
         return entity
 
     def get_count(self, obj):
@@ -194,7 +194,7 @@ class HistorySerializer(serializers.Serializer):
     histories = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
         return entity
 
     def get_count(self, obj):
