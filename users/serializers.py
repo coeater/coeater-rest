@@ -48,7 +48,11 @@ class FriendWaitSerializer(serializers.Serializer):
     requests = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -73,7 +77,10 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile.url}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
 
                 entity.update(id)
                 entity.update(nickname)
@@ -105,7 +112,10 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile.url}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
 
                 entity.update(id)
                 entity.update(nickname)
@@ -126,7 +136,11 @@ class FriendSerializer(serializers.Serializer):
     friends = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -153,7 +167,11 @@ class FriendSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile.url}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
+
 
                 entity.update(id)
                 entity.update(nickname)
@@ -194,7 +212,11 @@ class HistorySerializer(serializers.Serializer):
     histories = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -213,10 +235,16 @@ class HistorySerializer(serializers.Serializer):
                 nickname = {"nickname": target.nickname}
                 id = {"id": target_id}
                 code = {"code": target.code}
+                if target.profile:
+                    profile = {"profile": target.profile.url}
+                else:
+                    profile = {"profile": None}
+
                 created = {"created": e.get("created")}
 
                 entity.update(id)
                 entity.update(nickname)
+                entity.update(profile)
                 entity.update(code)
                 entity.update(created)
 
