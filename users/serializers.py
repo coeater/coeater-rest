@@ -48,7 +48,7 @@ class FriendWaitSerializer(serializers.Serializer):
     requests = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
         return entity
 
     def get_count(self, obj):
@@ -73,7 +73,7 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile}
+                profile = {"profile": user.profile.url}
 
                 entity.update(id)
                 entity.update(nickname)
@@ -105,7 +105,7 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile}
+                profile = {"profile": user.profile.url}
 
                 entity.update(id)
                 entity.update(nickname)
@@ -126,7 +126,7 @@ class FriendSerializer(serializers.Serializer):
     friends = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
         return entity
 
     def get_count(self, obj):
@@ -153,7 +153,7 @@ class FriendSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
-                profile = {"profile": user.profile}
+                profile = {"profile": user.profile.url}
 
                 entity.update(id)
                 entity.update(nickname)
@@ -194,7 +194,7 @@ class HistorySerializer(serializers.Serializer):
     histories = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile}
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": obj.profile.url}
         return entity
 
     def get_count(self, obj):
