@@ -248,7 +248,7 @@ class HistorySerializer(serializers.Serializer):
                 entity.update(code)
                 entity.update(created)
 
-                result.append(list(entity))
+                result.append(entity)
             return result
 
         else:
