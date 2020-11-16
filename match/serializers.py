@@ -13,7 +13,11 @@ class InvitationSerializer(serializers.ModelSerializer):
     def get_owner(self, obj):
         if obj.inviter:
             user = obj.inviter
-            entity = {"id": user.id, "nickname": user.nickname, "code": user.code}
+            if user.profile:
+                url = user.profile.url
+            else:
+                url = None
+            entity = {"id": user.id, "nickname": user.nickname, "code": user.code, "profile": url}
             return entity
         else:
             return None
@@ -21,7 +25,11 @@ class InvitationSerializer(serializers.ModelSerializer):
     def get_target(self, obj):
         if obj.invitee:
             user = obj.invitee
-            entity = {"id": user.id, "nickname": user.nickname, "code": user.code}
+            if user.profile:
+                url = user.profile.url
+            else:
+                url = None
+            entity = {"id": user.id, "nickname": user.nickname, "code": user.code, "profile": url}
             return entity
         else:
             return None

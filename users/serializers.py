@@ -17,14 +17,14 @@ class UserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ['id', 'code', 'nickname', 'created']
+        fields = ['id', 'code', 'nickname', 'profile', 'created']
 
 class ManageUserSerializer(serializers.ModelSerializer):
     """
     """
     class Meta:
         model = User
-        fields = ['uid', 'jwt', 'code', 'nickname']
+        fields = ['id', 'uid', 'jwt', 'code', 'nickname', 'profile']
 
     def create(self, validated_data):
         """
@@ -46,8 +46,13 @@ class FriendWaitSerializer(serializers.Serializer):
     count = serializers.SerializerMethodField()
     friends = serializers.SerializerMethodField()
     requests = serializers.SerializerMethodField()
+
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -72,10 +77,15 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -102,10 +112,15 @@ class FriendWaitSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -121,7 +136,11 @@ class FriendSerializer(serializers.Serializer):
     friends = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -148,10 +167,16 @@ class FriendSerializer(serializers.Serializer):
                 nickname = {"nickname": user.nickname}
                 id = {"id": target_id}
                 code = {"code": user.code}
+                if user.profile:
+                    profile = {"profile": user.profile.url}
+                else:
+                    profile = {"profile": None}
+
 
                 entity.update(id)
                 entity.update(nickname)
                 entity.update(code)
+                entity.update(profile)
 
                 result.append(entity)
             return result
@@ -187,7 +212,11 @@ class HistorySerializer(serializers.Serializer):
     histories = serializers.SerializerMethodField()
 
     def get_owner(self, obj):
-        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code}
+        if obj.profile:
+            url = obj.profile.url
+        else:
+            url = None
+        entity = {"id": obj.id, "nickname": obj.nickname, "code": obj.code, "profile": url}
         return entity
 
     def get_count(self, obj):
@@ -206,12 +235,20 @@ class HistorySerializer(serializers.Serializer):
                 nickname = {"nickname": target.nickname}
                 id = {"id": target_id}
                 code = {"code": target.code}
+                if target.profile:
+                    profile = {"profile": target.profile.url}
+                else:
+                    profile = {"profile": None}
+
+                created = {"created": e.get("created")}
 
                 entity.update(id)
                 entity.update(nickname)
+                entity.update(profile)
                 entity.update(code)
+                entity.update(created)
 
-                result.append(list(entity))
+                result.append(entity)
             return result
 
         else:
