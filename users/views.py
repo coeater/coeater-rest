@@ -15,6 +15,7 @@ from PIL import Image
 from django.core.files.base import ContentFile
 from io import BytesIO, StringIO
 
+import datetime
 import uuid
 
 def parse_jwt(request):
@@ -271,8 +272,68 @@ def history_view(request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = HistorySerializer(user)
-        return Response(serializer.data)
+        range_from = request.query_params.get("from")
+        range_to = request.query_params.get("to")
+
+        if range_from and range_to:
+            try:
+                start = range_from.split("-")
+                end = range_to.split("-")
+                if len(start) != 3 or len(end) != 3:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+                start_year = start[0]
+                start_month = start[1]
+                start_day = start[2]
+
+                end_year = end[0]
+                end_month = end[1]
+                end_day = end[2]
+                
+                range_from = datetime.datetime(year=int(start_year), month=int(start_month), day=int(start_day), hour=0, minute=0, second=0)
+                range_to = datetime.datetime(year=int(end_year), month=int(end_month), day=int(end_day), hour=23, minute=59, second=59)
+
+                response_data = dict()
+                histories = History.objects.all().filter(owner=user, created__range=(range_from, range_to))
+                histories_list = histories.values()
+                result = list()
+                for history in histories_list:
+                    target_id = history.get("target_id")
+                    target = User.objects.get(pk=target_id)
+                    if target.profile:
+                        url = target.profile.url
+                    else:
+                        url = None
+                    entity = {"id": target.id, "nickname": target.nickname, "code": target.code, "profile": url}
+                    e = {"target" : entity, "created": history.get("created")}
+                    result.append(e)
+
+                if user.profile:
+                    url = user.profile.url
+                else:
+                    url = None
+                owner = {"id": user.id, "nickname": user.nickname, "code": user.code, "profile": url}
+                response_data.update({"owner" : owner})
+                response_data.update({"count": len(result)})
+                response_data.update({"histories": result})
+                
+                return Response(response_data)
+
+
+            except History.DoesNotExist:
+                response_data = dict()
+                if user.profile:
+                    url = user.profile.url
+                else:
+                    url = None
+                entity = {"id": user.id, "nickname": user.nickname, "code": user.code, "profile": url}
+                response_data.update({"owner" : entity})
+                response_data.update({"count": 0})
+                response_data.update({"histories": []})
+                return Response(response_data)
+        else:
+            serializer = HistorySerializer(user)
+            return Response(serializer.data)
 
     elif request.method == 'POST':
         owner = user.id
