@@ -306,7 +306,7 @@ def history_view(request):
                         url = None
                     entity = {"id": target.id, "nickname": target.nickname, "code": target.code, "profile": url}
                     e = {"created": history.get("created")}
-                    result.append(entity)
+                    e.update(entity)
                     result.append(e)
 
                 if user.profile:
