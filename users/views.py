@@ -305,7 +305,8 @@ def history_view(request):
                     else:
                         url = None
                     entity = {"id": target.id, "nickname": target.nickname, "code": target.code, "profile": url}
-                    e = {"target" : entity, "created": history.get("created")}
+                    e = {"created": history.get("created")}
+                    result.append(entity)
                     result.append(e)
 
                 if user.profile:
